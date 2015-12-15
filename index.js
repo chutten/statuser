@@ -40,6 +40,7 @@ var button = ActionButton({
   badge: undefined,
   badgeColor: "red",
   icon: mBaseSVG.replace(ANIMATE_TEMPLATE, mAnimateSVG),
+  onClick: buttonClick,
 });
 
 function changeState(button, aBaseSVG, aAnimateSVG = mAnimateSVG) {
@@ -139,5 +140,11 @@ gWindow.requestAnimationFrame(function framefn() {
 
 function updateBadge() {
   button.badge = (numHangs - baseNumHangs) - numHangsObserved;
-  button.badgeColor - BADGE_COLOURS[button.badge % BADGE_COLOURS.length];
+  button.badgeColor = BADGE_COLOURS[button.badge % BADGE_COLOURS.length];
+}
+
+function buttonClick() {
+  baseNumHangs = numHangs;
+  numHangsObserved = 0;
+  updateBadge();
 }
