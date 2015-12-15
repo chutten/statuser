@@ -1,0 +1,16 @@
+{
+  "title": "Statuser",
+  "name": "statuser",
+  "version": "0.0.1",
+  "description": "Firefox toolbar indicator lights",
+  "main": "index.js",
+  "author": "Chris H-C",
+  "engines": {
+    "firefox": ">=38.0a1",
+    "fennec": ">=38.0a1"
+  },
+  "license": "MIT",
+  "keywords": [
+    "jetpack"
+  ]
+}
