@@ -1,6 +1,6 @@
 #Statuser
 Statuser tracks user status in Firefox. You can get it here:
-http://people.mozilla.org/~chutten/statuser/
+https://people.mozilla.org/~chutten/statuser/
 
 * If the user is considered active, it will take the shape of a red square.
 * If the user is considered inactive, it will take the shape of a blue circle.
