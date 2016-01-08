@@ -5,7 +5,7 @@
           <em:type>2</em:type>
           <em:bootstrap>true</em:bootstrap>
           <em:unpack>false</em:unpack>
-          <em:version>0.0.3</em:version>
+          <em:version>0.0.4</em:version>
           <em:name>Statuser</em:name>
           <em:description>Red Square: user active. Blue Circle: inactive. Badge Count: hangs over 126ms.</em:description>
           <em:creator>Chris H-C</em:creator>

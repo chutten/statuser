@@ -1,7 +1,7 @@
 {
   "title": "Statuser",
   "name": "statuser",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Firefox toolbar indicator lights",
   "main": "index.js",
   "author": "Chris H-C",
@@ -12,5 +12,19 @@
   "license": "MIT",
   "keywords": [
     "jetpack"
-  ]
+  ],
+  "preferences": [{
+    "name": "mode",
+    "title": "Mode",
+    "description": "How should statuser track hangs?",
+    "type": "menulist",
+    "value": "threadHangs",
+    "options": [{
+      "value": "threadHangs",
+      "label": "Counting thread hangs from the Gecko process"
+    }, {
+      "value": "eventLoopLags",
+      "label": "Counting the number of times it takes > 50ms to service a UI message"
+    }]
+  }]
 }
