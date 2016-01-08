@@ -1,10 +1,11 @@
 {
   "title": "Statuser",
   "name": "statuser",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Firefox toolbar indicator lights",
   "main": "index.js",
   "author": "Chris H-C",
+  "contributors": ["Mike Conley"],
   "engines": {
     "firefox": ">=38.0a1",
     "fennec": ">=38.0a1"
@@ -13,6 +14,7 @@
   "keywords": [
     "jetpack"
   ],
+  "updateURL": "https://chutten.github.io/statuser/dist/update.rdf",
   "preferences": [{
     "name": "mode",
     "title": "Mode",
