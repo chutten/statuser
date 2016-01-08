@@ -1,8 +1,10 @@
 var self = require("sdk/self");
+var prefs = require("sdk/simple-prefs");
 
 const windowUtils = require("sdk/window/utils");
 var gBrowser = windowUtils.getMostRecentBrowserWindow().getBrowser();
 var gWindow = windowUtils.getMostRecentBrowserWindow();
+var gMode = prefs.prefs.mode;
 
 const { setInterval } = require("sdk/timers");
 const { ActionButton } = require("sdk/ui/button/action");
@@ -91,8 +93,25 @@ gOS.addObserver(exports, "user-interaction-inactive", false);
 
 gBrowser.addTabsProgressListener(exports)
 
-const HANG_THRESHOLD = 126; // ms over which a bucket must start to be counted as a hang
+prefs.on("mode", function() {
+  gMode = prefs.prefs.mode;
+});
+
 function numGeckoHangs() {
+  switch(gMode) {
+    case "threadHangs": {
+      return numThreadHangs();
+    }
+    case "eventLoopLags": {
+      return numEventLoopLags();
+    }
+  }
+
+  return 0;
+}
+
+const HANG_THRESHOLD = 126; // ms over which a bucket must start to be counted as a hang
+function numThreadHangs() {
   let geckoThread = Services.telemetry.threadHangStats.find(thread =>
     thread.name == "Gecko"
   );
@@ -104,10 +123,21 @@ function numGeckoHangs() {
   geckoThread.activity.counts.forEach((count, i) => {
     if (geckoThread.activity.ranges[i] > HANG_THRESHOLD) {
       numHangs += count;
-    }
-  });
+  }});
   return numHangs;
 }
+
+function numEventLoopLags() {
+  let snapshot = Services.telemetry.getHistogramById("EVENTLOOP_UI_ACTIVITY_EXP_MS").snapshot();
+  let result = 0;
+  for (let i = 0; i < snapshot.ranges.length; ++i) {
+    if (snapshot.ranges[i] > 50) {
+      result += snapshot.counts[i];
+    }
+  }
+  return result;
+}
+
 
 const BADGE_COLOURS = ["red", "blue", "brown", "black"];
 const CHECK_FOR_HANG_INTERVAL = 400; // in millis
