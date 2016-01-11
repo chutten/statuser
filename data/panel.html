@@ -28,9 +28,9 @@
   <h1>STATUSER SETTINGS</h1>
   <form>
     <div>
-      <label><input type="radio" id="countThreadHangs" /> Count thread hangs</label><br>
-      <label><input type="radio" id="countEventLoopHangs" /> Count event loop hangs</label>
-      <p class="description">Statuser can count either hangs on the main thread, or hangs on the event loop.</p>
+      <label><input type="radio" name="mode" id="countThreadHangs" /> Count thread hangs</label><br>
+      <label><input type="radio" name="mode" id="countEventLoopLags" /> Count event loop hangs</label>
+      <p class="description">Statuser can count either hangs on the main thread, or hangs on the event loop. Changing this will reset the current hang count.</p>
     </div>
     <hr>
     <div>

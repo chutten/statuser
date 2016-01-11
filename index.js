@@ -1,11 +1,19 @@
 var self = require("sdk/self");
-var prefs = require("sdk/simple-prefs");
+var ss = require("sdk/simple-storage");
 
 const windowUtils = require("sdk/window/utils");
 var gBrowser = windowUtils.getMostRecentBrowserWindow().getBrowser();
 var gWindow = windowUtils.getMostRecentBrowserWindow();
-var gMode = prefs.prefs.mode;
-var gHangThreshold = 126; // ms over which a bucket must start to be counted as a hang
+
+// load and validate settings
+var gMode = ss.storage.mode;
+if (gMode !== "threadHangs" && gMode !== "eventLoopLags") {
+	gMode = "threadHangs";
+}
+var gHangThreshold = ss.storage.hangThreshold; // ms over which a bucket must start to be counted as a hang
+if (typeof gHangThreshold !== "number" || gHangThreshold < 1) {
+	gHangThreshold = 126;
+}
 
 const { setInterval } = require("sdk/timers");
 const { ActionButton } = require("sdk/ui/button/action");
@@ -40,7 +48,7 @@ var mBaseLabel = "User Interaction Active";
 var button = ActionButton({
   id: "active-button",
   label: mBaseLabel,
-  badge: undefined,
+  badge: 0,
   badgeColor: "red",
   icon: mBaseSVG.replace(ANIMATE_TEMPLATE, mAnimateSVG),
   onClick: showPanel,
@@ -58,21 +66,27 @@ var panel = require("sdk/panel").Panel({
   contentURL: "./panel.html",
 	contentScriptFile: "./panel.js",
 });
+function showPanel() {
+	panel.show({position: button});
+}
+
 panel.on("show", function() { // this event is generated automatically by the panel upon showing
   panel.port.emit("show", { // emit event on the panel's port so the script inside knows it's shown
 		hangThreshold: gHangThreshold,
+		mode: gMode,
 	});
 });
 panel.port.on("mode-changed", function(mode) { // this event is generated automatically by the panel upon showing
   gMode = mode;
+	ss.storage.mode = mode;
+	clearCount();
 });
-panel.port.on("hang-threshold-changed", function(threshold) { // this event is generated automatically by the panel upon showing
-  gHangThreshold = threshold;
+panel.port.on("hang-threshold-changed", function(hangThreshold) { // this event is generated automatically by the panel upon showing
+  gHangThreshold = hangThreshold;
+	ss.storage.hangThreshold = hangThreshold;
 });
 panel.port.on("clear-count", function() { // this event is generated automatically by the panel upon showing
-  baseNumHangs = numHangs;
-  numHangsObserved = 0;
-  updateBadge();
+  clearCount();
 });
 
 exports.observe = function (subject, topic, data) {
@@ -114,10 +128,6 @@ gOS.addObserver(exports, "user-interaction-active", false);
 gOS.addObserver(exports, "user-interaction-inactive", false);
 
 gBrowser.addTabsProgressListener(exports)
-
-prefs.on("mode", function() {
-  gMode = prefs.prefs.mode;
-});
 
 function numGeckoHangs() {
   switch(gMode) {
@@ -161,9 +171,22 @@ function numEventLoopLags() {
 
 
 const BADGE_COLOURS = ["red", "blue", "brown", "black"];
+let numHangsObserved = 0;
+
+function updateBadge() {
+  button.badge = (numHangs - baseNumHangs) - numHangsObserved;
+  button.badgeColor = BADGE_COLOURS[button.badge % BADGE_COLOURS.length];
+}
+
+function clearCount() {
+	baseNumHangs = numHangs;
+  numHangsObserved = 0;
+  updateBadge();
+}
+
 const CHECK_FOR_HANG_INTERVAL = 400; // in millis
 let numHangs = numGeckoHangs();
-let baseNumHangs = numHangs;
+let baseNumHangs = numHangs; // the number of hangs at the time the counter was last reset
 let hangCount;
 setInterval(() => {
   hangCount = numGeckoHangs();
@@ -173,11 +196,11 @@ setInterval(() => {
     //exports.observe(undefined, "thread-hang");
   }
 }, CHECK_FOR_HANG_INTERVAL);
+updateBadge();
 
-let prevFrameTime = Cu.now();
-let numHangsObserved = 0;
 /* Enable this rAF loop to verify that the hangs reported are roughly equal
  * to the number of hangs observed from script. In Nightly 45, they were.
+var prevFrameTime = Cu.now();
 gWindow.requestAnimationFrame(function framefn() {
   let currentFrameTime = Cu.now();
   if (currentFrameTime - prevFrameTime > gHangThreshold) {
@@ -188,13 +211,3 @@ gWindow.requestAnimationFrame(function framefn() {
   gWindow.requestAnimationFrame(framefn);
 });
 */
-
-function updateBadge() {
-  button.badge = (numHangs - baseNumHangs) - numHangsObserved;
-  button.badgeColor = BADGE_COLOURS[button.badge % BADGE_COLOURS.length];
-}
-
-function showPanel() {
-	panel.show({position: button});
-  
-}
