@@ -14,19 +14,5 @@
   "keywords": [
     "jetpack"
   ],
-  "updateURL": "https://chutten.github.io/statuser/dist/update.rdf",
-  "preferences": [{
-    "name": "mode",
-    "title": "Mode",
-    "description": "How should statuser track hangs?",
-    "type": "menulist",
-    "value": "threadHangs",
-    "options": [{
-      "value": "threadHangs",
-      "label": "Counting thread hangs from the Gecko process"
-    }, {
-      "value": "eventLoopLags",
-      "label": "Counting the number of times it takes > 50ms to service a UI message"
-    }]
-  }]
+  "updateURL": "https://chutten.github.io/statuser/dist/update.rdf"
 }
