@@ -8,11 +8,11 @@ var gWindow = windowUtils.getMostRecentBrowserWindow();
 // load and validate settings
 var gMode = ss.storage.mode;
 if (gMode !== "threadHangs" && gMode !== "eventLoopLags") {
-	gMode = "threadHangs";
+  gMode = "threadHangs";
 }
 var gHangThreshold = ss.storage.hangThreshold; // ms over which a bucket must start to be counted as a hang
 if (typeof gHangThreshold !== "number" || gHangThreshold < 1) {
-	gHangThreshold = 126;
+  gHangThreshold = 126;
 }
 
 const { setInterval } = require("sdk/timers");
@@ -20,25 +20,25 @@ const { ActionButton } = require("sdk/ui/button/action");
 
 const ANIMATE_TEMPLATE = '<!-- ANIMATE -->';
 const ANIMATE_ROTATE_SVG = '' +
-    '<animateTransform attributeName="transform" ' +
-                      'attributeType="XML" ' +
-                      'type="rotate" ' +
-                      'from="0 60 70" ' +
-                      'to="360 60 70" ' +
-                      'dur="10s" ' +
-                      'repeatCount="indefinite"/>';
+  '<animateTransform attributeName="transform" ' +
+                    'attributeType="XML" ' +
+                    'type="rotate" ' +
+                    'from="0 60 70" ' +
+                    'to="360 60 70" ' +
+                    'dur="10s" ' +
+                    'repeatCount="indefinite"/>';
 const RED_SVG = 'data:image/svg+xml,' +
-'<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">' +
-  '<rect width="100%" height="100%" fill="red">' +
-    ANIMATE_TEMPLATE +
-  '</rect>' +
-'</svg>';
+  '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">' +
+    '<rect width="100%" height="100%" fill="red">' +
+      ANIMATE_TEMPLATE +
+    '</rect>' +
+  '</svg>';
 const BLUE_CIRCLE_SVG = 'data:image/svg+xml,' +
-'<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">' +
-  '<circle r="50%" cx="50%" cy="50%" fill="blue">' +
-    ANIMATE_TEMPLATE +
-  '</circle>' +
-'</svg>';
+  '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">' +
+    '<circle r="50%" cx="50%" cy="50%" fill="blue">' +
+      ANIMATE_TEMPLATE +
+    '</circle>' +
+  '</svg>';
 const YELLOW_SVG = RED_SVG.replace('red', 'yellow');
 
 var mBaseSVG = RED_SVG;
@@ -64,26 +64,26 @@ function changeState(button, aBaseSVG, aAnimateSVG = mAnimateSVG) {
 
 var panel = require("sdk/panel").Panel({
   contentURL: "./panel.html",
-	contentScriptFile: "./panel.js",
+  contentScriptFile: "./panel.js",
 });
 function showPanel() {
-	panel.show({position: button});
+  panel.show({position: button});
 }
 
 panel.on("show", function() { // this event is generated automatically by the panel upon showing
   panel.port.emit("show", { // emit event on the panel's port so the script inside knows it's shown
-		hangThreshold: gHangThreshold,
-		mode: gMode,
-	});
+    hangThreshold: gHangThreshold,
+    mode: gMode,
+  });
 });
 panel.port.on("mode-changed", function(mode) { // this event is generated automatically by the panel upon showing
   gMode = mode;
-	ss.storage.mode = mode;
-	clearCount();
+  ss.storage.mode = mode;
+  clearCount();
 });
 panel.port.on("hang-threshold-changed", function(hangThreshold) { // this event is generated automatically by the panel upon showing
   gHangThreshold = hangThreshold;
-	ss.storage.hangThreshold = hangThreshold;
+  ss.storage.hangThreshold = hangThreshold;
 });
 panel.port.on("clear-count", function() { // this event is generated automatically by the panel upon showing
   clearCount();
@@ -91,24 +91,23 @@ panel.port.on("clear-count", function() { // this event is generated automatical
 
 exports.observe = function (subject, topic, data) {
   switch (topic) {
-	case "user-interaction-active":
-    changeState(button, RED_SVG);
-    break;
-  case "user-interaction-inactive":
-    changeState(button, BLUE_CIRCLE_SVG);
-    break;
-  case "thread-hang":
-    changeState(button, YELLOW_SVG);
-    break;
-  default:
-    console.warn("Unknown subject: ", subject);
-    break;
+    case "user-interaction-active":
+      changeState(button, RED_SVG);
+      break;
+    case "user-interaction-inactive":
+      changeState(button, BLUE_CIRCLE_SVG);
+      break;
+    case "thread-hang":
+      changeState(button, YELLOW_SVG);
+      break;
+    default:
+      console.warn("Unknown subject: ", subject);
+      break;
   }
 };
 
 exports.onStateChange = function (aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
-  if (aWebProgress.isTopLevel
-    && aStateFlags & Ci.nsIWebProgressListener.STATE_IS_WINDOW) {
+  if (aWebProgress.isTopLevel && aStateFlags & Ci.nsIWebProgressListener.STATE_IS_WINDOW) {
     if (aStateFlags & Ci.nsIWebProgressListener.STATE_START) {
       changeState(button, undefined, ANIMATE_ROTATE_SVG);
     } else if (aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) {
@@ -137,9 +136,10 @@ function numGeckoHangs() {
     case "eventLoopLags": {
       return numEventLoopLags();
     }
+    default:
+      console.warn("Unknown mode: ", gMode);
+      return 0;
   }
-
-  return 0;
 }
 
 function numThreadHangs() {
@@ -154,7 +154,8 @@ function numThreadHangs() {
   geckoThread.activity.counts.forEach((count, i) => {
     if (geckoThread.activity.ranges[i] > gHangThreshold) {
       numHangs += count;
-  }});
+    }
+  });
   return numHangs;
 }
 
@@ -179,7 +180,7 @@ function updateBadge() {
 }
 
 function clearCount() {
-	baseNumHangs = numHangs;
+  baseNumHangs = numHangs;
   numHangsObserved = 0;
   updateBadge();
 }
