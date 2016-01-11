@@ -5,6 +5,7 @@ const windowUtils = require("sdk/window/utils");
 var gBrowser = windowUtils.getMostRecentBrowserWindow().getBrowser();
 var gWindow = windowUtils.getMostRecentBrowserWindow();
 var gMode = prefs.prefs.mode;
+var gHangThreshold = 126; // ms over which a bucket must start to be counted as a hang
 
 const { setInterval } = require("sdk/timers");
 const { ActionButton } = require("sdk/ui/button/action");
@@ -42,7 +43,7 @@ var button = ActionButton({
   badge: undefined,
   badgeColor: "red",
   icon: mBaseSVG.replace(ANIMATE_TEMPLATE, mAnimateSVG),
-  onClick: buttonClick,
+  onClick: showPanel,
 });
 
 function changeState(button, aBaseSVG, aAnimateSVG = mAnimateSVG) {
@@ -52,6 +53,27 @@ function changeState(button, aBaseSVG, aAnimateSVG = mAnimateSVG) {
     icon: mBaseSVG.replace(ANIMATE_TEMPLATE, mAnimateSVG),
   });
 }
+
+var panel = require("sdk/panel").Panel({
+  contentURL: "./panel.html",
+	contentScriptFile: "./panel.js",
+});
+panel.on("show", function() { // this event is generated automatically by the panel upon showing
+  panel.port.emit("show", { // emit event on the panel's port so the script inside knows it's shown
+		hangThreshold: gHangThreshold,
+	});
+});
+panel.port.on("mode-changed", function(mode) { // this event is generated automatically by the panel upon showing
+  gMode = mode;
+});
+panel.port.on("hang-threshold-changed", function(threshold) { // this event is generated automatically by the panel upon showing
+  gHangThreshold = threshold;
+});
+panel.port.on("clear-count", function() { // this event is generated automatically by the panel upon showing
+  baseNumHangs = numHangs;
+  numHangsObserved = 0;
+  updateBadge();
+});
 
 exports.observe = function (subject, topic, data) {
   switch (topic) {
@@ -110,7 +132,6 @@ function numGeckoHangs() {
   return 0;
 }
 
-const HANG_THRESHOLD = 126; // ms over which a bucket must start to be counted as a hang
 function numThreadHangs() {
   let geckoThread = Services.telemetry.threadHangStats.find(thread =>
     thread.name == "Gecko"
@@ -121,7 +142,7 @@ function numThreadHangs() {
   }
   let numHangs = 0;
   geckoThread.activity.counts.forEach((count, i) => {
-    if (geckoThread.activity.ranges[i] > HANG_THRESHOLD) {
+    if (geckoThread.activity.ranges[i] > gHangThreshold) {
       numHangs += count;
   }});
   return numHangs;
@@ -159,7 +180,7 @@ let numHangsObserved = 0;
  * to the number of hangs observed from script. In Nightly 45, they were.
 gWindow.requestAnimationFrame(function framefn() {
   let currentFrameTime = Cu.now();
-  if (currentFrameTime - prevFrameTime > HANG_THRESHOLD) {
+  if (currentFrameTime - prevFrameTime > gHangThreshold) {
     numHangsObserved++;
     updateBadge();
   }
@@ -173,8 +194,7 @@ function updateBadge() {
   button.badgeColor = BADGE_COLOURS[button.badge % BADGE_COLOURS.length];
 }
 
-function buttonClick() {
-  baseNumHangs = numHangs;
-  numHangsObserved = 0;
-  updateBadge();
+function showPanel() {
+	panel.show({position: button});
+  
 }
