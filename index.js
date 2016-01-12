@@ -68,14 +68,12 @@ var panel = require("sdk/panel").Panel({
 });
 function showPanel() {
   panel.show({position: button});
-}
-
-panel.on("show", function() { // this event is generated automatically by the panel upon showing
   panel.port.emit("show", { // emit event on the panel's port so the script inside knows it's shown
     hangThreshold: gHangThreshold,
     mode: gMode,
   });
-});
+}
+
 panel.port.on("mode-changed", function(mode) { // this event is generated automatically by the panel upon showing
   gMode = mode;
   ss.storage.mode = mode;

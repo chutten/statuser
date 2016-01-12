@@ -8,7 +8,13 @@ countEventLoopLags.addEventListener("click", function() {
   self.port.emit("mode-changed", "eventLoopLags");
 });
 var hangThreshold = document.getElementById("hangThreshold");
-hangThreshold.addEventListener("input", function() {
+var setHangThreshold = document.getElementById("setHangThreshold");
+hangThreshold.addEventListener("keyup", function(event) {
+  if (event.keyCode == 13) {
+    setHangThreshold.click();
+  }
+});
+setHangThreshold.addEventListener("click", function() {
   var value = parseInt(hangThreshold.value);
   if (!isNaN(value)) {
     self.port.emit("hang-threshold-changed", value);
