@@ -24,11 +24,4 @@ Click the Statuser button to access settings:
 Development
 -----------
 
-To build the extension, use `jpm xpi`. To build an XPI for distribution, simply run `./build.sh`.
-
-When changing version numbers, make sure to update them in the following places:
-
-* In paragraph 2 of this README.
-* In `package.json`, under `version`.
-* In `dist/update.rdf`, under `em:version` and all `em:updateLink` tags.
-* In the link to the XPI for `dist/index.html`.
+To build the extension, run `jpm xpi`. To build an XPI for distribution, simply run `bash build.sh`. Specify the version number in `package.json`, and the build script will insert it everywhere else where necessary.
