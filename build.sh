@@ -14,10 +14,10 @@ IFS=$'\n' # temporarily set the fields delimiter to newline
 for f in $(find -name '*.rdf.template' -or -name '*.html.template')
 do
   echo "processing $f"
-  sed "s/{{\s*VERSION\s*}}/$VERSION/g" "$f" | sed "2s;^;<!-- DO NOT EDIT; AUTOMATICALLY GENERATED FROM: $f -->\n\n;" |  tee ${f%.*} > /dev/null
+  sed "s/{{\s*VERSION\s*}}/$VERSION/g" "$f" | sed "2s;^;<!-- DO NOT EDIT - AUTOMATICALLY GENERATED FROM: $f -->\n\n;" |  tee ${f%.*} > /dev/null
 done
 for f in $(find -name '*.md.template')
 do
   echo "processing $f"
-  sed "s/{{\s*VERSION\s*}}/$VERSION/g" "$f" | sed "1s;^;<!-- DO NOT EDIT; AUTOMATICALLY GENERATED FROM: $f -->\n\n;" |  tee ${f%.*} > /dev/null
+  sed "s/{{\s*VERSION\s*}}/$VERSION/g" "$f" | sed "1s;^;<!-- DO NOT EDIT - AUTOMATICALLY GENERATED FROM: $f -->\n\n;" |  tee ${f%.*} > /dev/null
 done

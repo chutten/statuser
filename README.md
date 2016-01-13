@@ -1,4 +1,4 @@
-<!-- AUTOMATICALLY GENERATED FROM: ./README.md.template -->
+<!-- DO NOT EDIT - AUTOMATICALLY GENERATED FROM: ./README.md.template -->
 
 #Statuser
 Statuser tracks user status in Firefox. You can get it here:
