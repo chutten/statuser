@@ -25,3 +25,9 @@ Development
 -----------
 
 To build the extension, run `jpm xpi`. To build an XPI for distribution, simply run `bash build.sh`. Specify the version number in `package.json`, and the build script will insert it everywhere else where necessary.
+
+Firefox addons [need to be signed](https://wiki.mozilla.org/Add-ons/Extension_Signing) before they can be properly installed. Authors of [Statuser on AMO](https://addons.mozilla.org/en-US/developers/addon/statuser) can sign the Statuser XPI file as follows:
+
+1. Generate credentials at the [Developer Hub](https://addons.mozilla.org/en-US/developers/addon/api/key/). The JWT issuer is the API key, while the JWT secret is the API secret.
+2. Run `jpm sign --api-key=API_KEY_GOES_HERE --api-secret=API_SECRET_GOES_HERE --xpi dist/statuser-*.xpi`.
+3. Wait for validation to complete - the signed XPI will be downloaded to the working directory. This can sometimes take a while.
