@@ -1,0 +1,8 @@
+<html>
+<head>
+<title>Install Statuser</title>
+</head>
+<body>
+<a href="statuser-{{ VERSION }}.xpi">Install Statuser Here</a>
+</body>
+</html>
