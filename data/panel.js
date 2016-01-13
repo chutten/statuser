@@ -48,7 +48,6 @@ self.port.on("show", function(currentSettings) {
 });
 
 // process warning messages
-document.getElementById("warningBanner").style.display = "none"; // hide warning banner
 self.port.on("warning", function(warningType) {
   var banner = document.getElementById("warningBanner");
   switch (warningType) {
