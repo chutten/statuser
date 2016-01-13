@@ -19,14 +19,16 @@ document.getElementById("clearCount").addEventListener("click", function() {
 });
 
 // open external links in a new tab
-var links = document.getElementsByClassName("external-link");
-for (var i = 0; i < links.length; i ++) {
-  links[i].addEventListener("click", function(event) {
-    if (typeof event.target.href === "string") {
-      self.port.emit("open-link", event.target.href);
-    }
-    event.preventDefault();
-  });
+function setExternalLinks() {
+  var links = document.getElementsByClassName("external-link");
+  for (var i = 0; i < links.length; i ++) {
+    links[i].onclick = function (event) {
+      if (typeof event.target.href === "string") {
+        self.port.emit("open-link", event.target.href);
+      }
+      event.preventDefault();
+    };
+  }
 }
 
 // listen to re-emitted show event from main script
@@ -42,5 +44,20 @@ self.port.on("show", function(currentSettings) {
       break;
     default:
       console.warn("Unknown mode: ", currentSettings.mode);
+  }
+});
+
+// process warning messages
+document.getElementById("warningBanner").style.display = "none"; // hide warning banner
+self.port.on("warning", function(warningType) {
+  var banner = document.getElementById("warningBanner");
+  switch (warningType) {
+    case "unavailableBHR":
+      banner.innerHTML = "<a href=\"about:telemetry\" class=\"external-link\">UNAVAILABLE</a>";
+      setExternalLinks(); // ensure that external links in the banner work properly
+      banner.style.display = "block";
+      break;
+    default:
+      banner.style.display = "none";
   }
 });

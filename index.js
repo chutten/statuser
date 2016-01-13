@@ -74,25 +74,25 @@ function showPanel() {
   });
 }
 
-// Switch modes between thread hang detection and event loop lag detection
+// switch modes between thread hang detection and event loop lag detection
 panel.port.on("mode-changed", function(mode) {
   gMode = mode;
   ss.storage.mode = mode;
   clearCount();
 });
 
-// Set the hang threshold
+// set the hang threshold
 panel.port.on("hang-threshold-changed", function(hangThreshold) {
   gHangThreshold = hangThreshold;
   ss.storage.hangThreshold = hangThreshold;
 });
 
-// Clear the hang counter
+// clear the hang counter
 panel.port.on("clear-count", function() {
   clearCount();
 });
 
-// Open external links clicked in the panel in a new tab
+// open external links clicked in the panel in a new tab
 panel.port.on("open-link", function(url) {
   require("sdk/tabs").open(url);
   panel.hide();
@@ -157,7 +157,7 @@ function numThreadHangs() {
   );
   if (!geckoThread || !geckoThread.activity.counts) {
     console.warn("Lolwhut? No Gecko thread? No hangs?");
-    return;
+    return null;
   }
   let numHangs = 0;
   geckoThread.activity.counts.forEach((count, i) => {
@@ -184,8 +184,15 @@ const BADGE_COLOURS = ["red", "blue", "brown", "black"];
 let numHangsObserved = 0;
 
 function updateBadge() {
-  button.badge = (numHangs - baseNumHangs) - numHangsObserved;
-  button.badgeColor = BADGE_COLOURS[button.badge % BADGE_COLOURS.length];
+  if (numHangs === null) {
+    button.badge = "?"
+    button.badgeColor = "yellow";
+    panel.port.emit("warning", "unavailableBHR");
+  } else {
+    button.badge = (numHangs - baseNumHangs) - numHangsObserved;
+    button.badgeColor = BADGE_COLOURS[button.badge % BADGE_COLOURS.length];
+    panel.port.emit("warning", null);
+  }
 }
 
 function clearCount() {
@@ -195,7 +202,7 @@ function clearCount() {
 }
 
 const CHECK_FOR_HANG_INTERVAL = 400; // in millis
-let numHangs = numGeckoHangs();
+let numHangs = numGeckoHangs(); // note: this will be null if the hang counter is not available
 let baseNumHangs = numHangs; // the number of hangs at the time the counter was last reset
 let hangCount;
 setInterval(() => {

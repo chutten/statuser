@@ -2,7 +2,7 @@
 Statuser tracks user status in Firefox. You can get it here:
 https://chutten.github.io/statuser/dist/
 
-The current version is 0.0.8.
+The current version is 0.0.9.
 
 * If the user is considered active, it will take the shape of a red square.
 * If the user is considered inactive, it will take the shape of a blue circle.
@@ -28,5 +28,5 @@ When changing version numbers, make sure to update them in the following places:
 
 * In paragraph 2 of this README.
 * In `package.json`, under `version`.
-* In `dist/update.rdf`, under `em:version`.
+* In `dist/update.rdf`, under `em:version` and all `em:updateLink` tags.
 * In the link to the XPI for `dist/index.html`.
