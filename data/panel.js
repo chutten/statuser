@@ -18,19 +18,6 @@ document.getElementById("clearCount").addEventListener("click", function() {
   self.port.emit("clear-count");
 });
 
-// open external links in a new tab
-function setExternalLinks() {
-  var links = document.getElementsByClassName("external-link");
-  for (var i = 0; i < links.length; i ++) {
-    links[i].onclick = function (event) {
-      if (typeof event.target.href === "string") {
-        self.port.emit("open-link", event.target.href);
-      }
-      event.preventDefault();
-    };
-  }
-}
-
 // listen to re-emitted show event from main script
 self.port.on("show", function(currentSettings) {
   // populate the settings dialog with the current value of the settings
@@ -53,8 +40,7 @@ self.port.on("warning", function(warningType) {
   var banner = document.getElementById("warningBanner");
   switch (warningType) {
     case "unavailableBHR":
-      banner.innerHTML = "<a href=\"about:telemetry\" class=\"external-link\">UNAVAILABLE</a>";
-      setExternalLinks(); // ensure that external links in the banner work properly
+      banner.innerHTML = "<a href=\"about:telemetry\" target=\"_blank\">UNAVAILABLE</a>";
       banner.style.display = "block";
       break;
     default:

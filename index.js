@@ -92,12 +92,6 @@ panel.port.on("clear-count", function() {
   clearCount();
 });
 
-// open external links clicked in the panel in a new tab
-panel.port.on("open-link", function(url) {
-  require("sdk/tabs").open(url);
-  panel.hide();
-});
-
 exports.observe = function (subject, topic, data) {
   switch (topic) {
     case "user-interaction-active":
