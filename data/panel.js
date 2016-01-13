@@ -8,22 +8,26 @@ countEventLoopLags.addEventListener("click", function() {
   self.port.emit("mode-changed", "eventLoopLags");
 });
 var hangThreshold = document.getElementById("hangThreshold");
-var setHangThreshold = document.getElementById("setHangThreshold");
-hangThreshold.addEventListener("keyup", function(event) {
-  if (event.keyCode == 13) {
-    setHangThreshold.click();
-  }
-});
-setHangThreshold.addEventListener("click", function() {
-  var value = parseInt(hangThreshold.value);
+hangThreshold.addEventListener("change", function(event) {
+  var value = parseInt(event.target.value);
   if (!isNaN(value)) {
     self.port.emit("hang-threshold-changed", value);
   }
 });
-var clearCount = document.getElementById("clearCount");
-clearCount.addEventListener("click", function() {
+document.getElementById("clearCount").addEventListener("click", function() {
   self.port.emit("clear-count");
 });
+
+// open external links in a new tab
+var links = document.getElementsByClassName("external-link");
+for (var i = 0; i < links.length; i ++) {
+  links[i].addEventListener("click", function(event) {
+    if (typeof event.target.href === "string") {
+      self.port.emit("open-link", event.target.href);
+    }
+    event.preventDefault();
+  });
+}
 
 // listen to re-emitted show event from main script
 self.port.on("show", function(currentSettings) {

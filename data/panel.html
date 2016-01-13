@@ -33,7 +33,7 @@
   </div>
   <hr>
   <div>
-    <label>Minimum hang threshold: <input type="number" min="1" id="hangThreshold" /> ms <button type="button" id="setHangThreshold">Set</button></label>
+    <label>Minimum hang threshold: <input type="number" min="1" id="hangThreshold" /> ms</label>
     <p class="description">Statuser will only count hangs that last at least as long as this threshold. This is rounded up to the nearest histogram bucket, so may not be exact.</p>
   </div>
   <div>
@@ -41,6 +41,6 @@
     <p class="description">This will reset the hang counter to 0.</p>
   </div>
   <hr>
-  <p class="note">On E10S builds, Statuser will <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1228437">only measure main thread hangs</a>.</p>
+  <p class="note">On E10S builds, Statuser will <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1228437" class="external-link">only measure main thread hangs</a>.</p>
 </body>
 </html>

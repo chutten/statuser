@@ -74,17 +74,28 @@ function showPanel() {
   });
 }
 
-panel.port.on("mode-changed", function(mode) { // this event is generated automatically by the panel upon showing
+// Switch modes between thread hang detection and event loop lag detection
+panel.port.on("mode-changed", function(mode) {
   gMode = mode;
   ss.storage.mode = mode;
   clearCount();
 });
-panel.port.on("hang-threshold-changed", function(hangThreshold) { // this event is generated automatically by the panel upon showing
+
+// Set the hang threshold
+panel.port.on("hang-threshold-changed", function(hangThreshold) {
   gHangThreshold = hangThreshold;
   ss.storage.hangThreshold = hangThreshold;
 });
-panel.port.on("clear-count", function() { // this event is generated automatically by the panel upon showing
+
+// Clear the hang counter
+panel.port.on("clear-count", function() {
   clearCount();
+});
+
+// Open external links clicked in the panel in a new tab
+panel.port.on("open-link", function(url) {
+  require("sdk/tabs").open(url);
+  panel.hide();
 });
 
 exports.observe = function (subject, topic, data) {
