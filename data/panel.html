@@ -10,6 +10,9 @@
       font-family: monospace;
       font-size: 12px;
     }
+    a {
+      color: inherit;
+    }
     input[type="submit"] {
       font-family: inherit;
       font-size: inherit;
@@ -21,28 +24,34 @@
       font-size: 70%;
       font-weight: bold;
     }
+    #warningBanner {
+      background: #d78613;
+      color: white;
+      padding: 1em;
+      margin: 0;
+      margin-bottom: 1em;
+    }
   </style>
 </head>
 
 <body>
+  <div id="warningBanner">WARNING</div>
   <h1>STATUSER SETTINGS</h1>
-  <form>
-    <div>
-      <label><input type="radio" name="mode" id="countThreadHangs" /> Count thread hangs</label><br>
-      <label><input type="radio" name="mode" id="countEventLoopLags" /> Count event loop lags</label>
-      <p class="description">Statuser can count either hangs on the main thread, or hangs on the event loop. Changing this will reset the current hang count.</p>
-    </div>
-    <hr>
-    <div>
-      <label>Minimum hang threshold: <input type="number" min="1" id="hangThreshold" /> ms</label>
-      <p class="description">Statuser will only count hangs that last at least as long as this threshold. This is rounded up to the nearest histogram bucket, so may not be exact.</p>
-    </div>
-    <div>
-      <input type="submit" value="Clear count" id="clearCount" />
-      <p class="description">This will reset the hang counter to 0.</p>
-    </div>
-    <hr>
-    <p class="note">On E10S builds, Statuser will <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1228437">only measure main thread hangs</a>.</p>
-  </form>
+  <div>
+    <label><input type="radio" name="mode" id="countThreadHangs" /> Count thread hangs</label><br>
+    <label><input type="radio" name="mode" id="countEventLoopLags" /> Count event loop lags</label>
+    <p class="description">Statuser can count either hangs on the main thread, or hangs on the event loop. Changing this will reset the hang counter.</p>
+  </div>
+  <hr>
+  <div>
+    <label>Minimum hang threshold: <input type="number" min="1" id="hangThreshold" /> ms</label>
+    <p class="description">Statuser will only count hangs that last at least as long as this threshold. This is rounded up to the nearest histogram bucket, so may not be exact.</p>
+  </div>
+  <div>
+    <button type="button" id="clearCount">Clear count</button>
+    <p class="description">This will reset the hang counter to 0.</p>
+  </div>
+  <hr>
+  <p class="note">On E10S builds, Statuser will <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1228437" target="_blank">only measure main thread hangs</a>.</p>
 </body>
 </html>

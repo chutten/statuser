@@ -8,14 +8,13 @@ countEventLoopLags.addEventListener("click", function() {
   self.port.emit("mode-changed", "eventLoopLags");
 });
 var hangThreshold = document.getElementById("hangThreshold");
-hangThreshold.addEventListener("input", function() {
-  var value = parseInt(hangThreshold.value);
+hangThreshold.addEventListener("change", function(event) {
+  var value = parseInt(event.target.value);
   if (!isNaN(value)) {
     self.port.emit("hang-threshold-changed", value);
   }
 });
-var clearCount = document.getElementById("clearCount");
-clearCount.addEventListener("click", function() {
+document.getElementById("clearCount").addEventListener("click", function() {
   self.port.emit("clear-count");
 });
 
@@ -32,5 +31,19 @@ self.port.on("show", function(currentSettings) {
       break;
     default:
       console.warn("Unknown mode: ", currentSettings.mode);
+  }
+});
+
+// process warning messages
+document.getElementById("warningBanner").style.display = "none"; // hide warning banner
+self.port.on("warning", function(warningType) {
+  var banner = document.getElementById("warningBanner");
+  switch (warningType) {
+    case "unavailableBHR":
+      banner.innerHTML = "<a href=\"about:telemetry\" target=\"_blank\">UNAVAILABLE</a>";
+      banner.style.display = "block";
+      break;
+    default:
+      banner.style.display = "none";
   }
 });
