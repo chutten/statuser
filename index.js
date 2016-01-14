@@ -10,6 +10,10 @@ var gMode = ss.storage.mode;
 if (gMode !== "threadHangs" && gMode !== "eventLoopLags") {
   gMode = "threadHangs";
 }
+var gPlaySound = ss.storage.playSound;
+if (typeof gPlaySound !== "boolean") {
+  gPlaySound = false;
+}
 var gHangThreshold = ss.storage.hangThreshold; // ms over which a bucket must start to be counted as a hang
 if (typeof gHangThreshold !== "number" || gHangThreshold < 1) {
   gHangThreshold = 126;
@@ -69,6 +73,7 @@ var panel = require("sdk/panel").Panel({
 function showPanel() {
   panel.show({position: button});
   panel.port.emit("show", { // emit event on the panel's port so the script inside knows it's shown
+    playSound: gPlaySound,
     hangThreshold: gHangThreshold,
     mode: gMode,
   });
@@ -79,6 +84,12 @@ panel.port.on("mode-changed", function(mode) {
   gMode = mode;
   ss.storage.mode = mode;
   clearCount();
+});
+
+// toggle notification sound on and off
+panel.port.on("play-sound-changed", function(playSound) {
+  gPlaySound = playSound;
+  ss.storage.playSound = playSound;
 });
 
 // set the hang threshold
@@ -176,16 +187,24 @@ function numEventLoopLags() {
 
 const BADGE_COLOURS = ["red", "blue", "brown", "black"];
 let numHangsObserved = 0;
-
+let prevNumHangs = null;
 function updateBadge() {
   if (numHangs === null) {
     button.badge = "?"
     button.badgeColor = "yellow";
     panel.port.emit("warning", "unavailableBHR");
+    prevNumHangs = null;
   } else {
     button.badge = (numHangs - baseNumHangs) - numHangsObserved;
     button.badgeColor = BADGE_COLOURS[button.badge % BADGE_COLOURS.length];
     panel.port.emit("warning", null);
+    
+    // tell the panel to play a sound if the number of hangs has been incremented
+    // (we can only play sounds in documents, and the panel is conveniently a document)
+    if (prevNumHangs !== null && button.badge > prevNumHangs) {
+      panel.port.emit("blip");
+    }
+    prevNumHangs = button.badge;
   }
 }
 
