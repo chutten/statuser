@@ -26,7 +26,7 @@ document.getElementById("clearCount").addEventListener("click", function() {
 self.port.on("show", function(currentSettings) {
   // populate the settings dialog with the current value of the settings
   playSound.checked = currentSettings.playSound;
-  document.getElementById("hangThreshold").value = currentSettings.hangThreshold;
+  hangThreshold.value = currentSettings.hangThreshold;
   switch (currentSettings.mode) {
     case "threadHangs":
       document.getElementById("countThreadHangs").checked = true;
@@ -49,16 +49,5 @@ self.port.on("warning", function(warningType) {
       break;
     default:
       banner.style.display = "none";
-  }
-});
-
-// trimmed and normalized blip sound from https://commons.wikimedia.org/wiki/File:Blip.ogg
-// available under public domain
-var blipSound = new Audio("blip.ogg");
-self.port.on("blip", function() {
-  if (playSound.checked) {
-    // play the blip sound
-    blipSound.currentTime = 0;
-    blipSound.play();
   }
 });
