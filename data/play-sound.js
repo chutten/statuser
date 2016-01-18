@@ -17,6 +17,9 @@ function playBlips(numberOfBlips) {
   blipSound.currentTime = 0;
   blipSound.play();
 
+  // we want the interval to be short so we don't take too much time for repeated blips to complete,
+  // yet we want the interval long enough that the blips are clearly distinguishable from each other.
+  // 200ms is a good balance between these.
   setTimeout(function() {
     playBlips(numberOfBlips - 1);
   }, 200);
