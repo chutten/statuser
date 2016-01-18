@@ -1,5 +1,6 @@
 var self = require("sdk/self");
 var ss = require("sdk/simple-storage");
+var clipboard = require("sdk/clipboard");
 
 const windowUtils = require("sdk/window/utils");
 var gBrowser = windowUtils.getMostRecentBrowserWindow().getBrowser();
@@ -69,6 +70,7 @@ function changeState(button, aBaseSVG, aAnimateSVG = mAnimateSVG) {
 var panel = require("sdk/panel").Panel({
   contentURL: "./panel.html",
   contentScriptFile: "./panel.js",
+  height: 600,
 });
 function showPanel() {
   panel.show({position: button});
@@ -101,6 +103,11 @@ panel.port.on("hang-threshold-changed", function(hangThreshold) {
 // clear the hang counter
 panel.port.on("clear-count", function() {
   clearCount();
+});
+
+// copy a value to the clipboard
+panel.port.on("copy", function(value) {
+  clipboard.set(value);
 });
 
 exports.observe = function (subject, topic, data) {
@@ -189,6 +196,24 @@ var soundPlayerPage = require("sdk/page-worker").Page({
   contentURL: "./play-sound.html",
 });
 
+// Returns an array of the most recent BHR hang pseudo-stacks as strings
+function mostRecentHangStacks() {
+  let geckoThread = Services.telemetry.threadHangStats.find(thread =>
+    thread.name == "Gecko"
+  );
+  if (!geckoThread) {
+    console.warn("Uh oh, there doesn't seem to be a thread with name \"Gecko\"!");
+    return [];
+  }
+  if (geckoThread.hangs.length == 0) { // No hangs found
+    return [];
+  }
+  var recentHangs = geckoThread.hangs.slice(Math.max(0, geckoThread.hangs.length - 10));
+  return recentHangs.map((hangEntry, i) => {
+    return hangEntry.stack.slice(0).reverse().join("\n");
+  });
+}
+
 const BADGE_COLOURS = ["red", "blue", "brown", "black"];
 let numHangsObserved = 0;
 let prevNumHangs = null;
@@ -202,9 +227,8 @@ function updateBadge() {
     button.badge = (numHangs - baseNumHangs) - numHangsObserved;
     button.badgeColor = BADGE_COLOURS[button.badge % BADGE_COLOURS.length];
     panel.port.emit("warning", null);
-    
-    // Tell the panel to play a sound if the number of hangs has been incremented
-    // (we can only play sounds in documents, and the panel is conveniently a document)
+
+    // tell the panel to play a sound if the number of hangs has been incremented
     if (gPlaySound && prevNumHangs !== null && button.badge > prevNumHangs) {
      soundPlayerPage.port.emit("blip", button.badge - prevNumHangs);
     }
@@ -216,6 +240,7 @@ function clearCount() {
   baseNumHangs = numHangs;
   numHangsObserved = 0;
   updateBadge();
+  panel.port.emit("set-hangs", []); // Clear the list of hangs
 }
 
 const CHECK_FOR_HANG_INTERVAL = 400; // in millis
@@ -227,6 +252,7 @@ setInterval(() => {
   if (hangCount > numHangs) {
     numHangs = hangCount;
     updateBadge();
+    panel.port.emit("set-hangs", mostRecentHangStacks());
     //exports.observe(undefined, "thread-hang");
   }
 }, CHECK_FOR_HANG_INTERVAL);

@@ -51,3 +51,29 @@ self.port.on("warning", function(warningType) {
       banner.style.display = "none";
   }
 });
+
+self.port.on("set-hangs", function(hangStacks) {
+  var hangs = document.getElementById("hangStacks");
+  hangs.innerHTML = ""; // clear the contents of the hang stacks list
+  hangStacks.reverse().forEach((hangStack, i) => {
+    // create an entry for the hang stack
+    var entry = document.createElement("div");
+    var copyButton = document.createElement("button");
+    copyButton.innerHTML = '<img src="copy-icon.svg" />'; // public domain copy icon, taken from http://publicicons.org/file-icon/
+    copyButton.className = "copyButton";
+    copyButton.title = "Copy Hang Stack";
+    copyButton.addEventListener("click", function(event) {
+      var value = entry.getElementsByClassName("hangContents")[0].textContent;
+      self.port.emit("copy", value);
+    });
+    entry.appendChild(copyButton);
+    var contents = document.createElement("div");
+    contents.className = "hangContents";
+    contents.appendChild(document.createTextNode(hangStack));
+    entry.appendChild(contents);
+    hangs.appendChild(entry);
+  });
+  if (hangStacks.length == 0) {
+    hangs.appendChild(document.createTextNode("No hang stack traces to show."));
+  }
+});

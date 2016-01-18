@@ -32,6 +32,32 @@
       margin: 0;
       margin-bottom: 1em;
     }
+    #hangStacks > div {
+      margin: 10px;
+      padding: 10px;
+      min-height: 20px;
+      background: #ddd;
+      color: black;
+      font-size: 8px;
+    }
+    .copyButton {
+      padding: 0;
+      float: right;
+      width: 20px;
+      height: 20px;
+      border: 1px solid black;
+      background: white;
+      border-radius: 50%;
+    }
+    .copyButton img {
+      width: 8px;
+    }
+    .copyButton:hover {
+      background: #eee;
+    }
+    .hangContents {
+      margin-right: 30px;
+    }
   </style>
 </head>
 
@@ -58,5 +84,11 @@
   </div>
   <hr>
   <p class="note">On E10S builds, Statuser will <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1228437" target="_blank">only measure main thread hangs</a>.</p>
+  <hr>
+  <h1>MOST RECENT HANGS</h1>
+  <div id="hangStacks">
+    <!-- hang stack entries are added here -->
+  </div>
+  <p class="note">The stack traces displayed here are are Background Hang Reporter pseudo-stacks. Only the 10 most recent stack traces are shown.</p>
 </body>
 </html>
