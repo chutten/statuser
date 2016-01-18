@@ -184,6 +184,10 @@ function numEventLoopLags() {
   return result;
 }
 
+var soundPlayerPage = require("sdk/page-worker").Page({
+  contentScriptFile: "./play-sound.js",
+  contentURL: "./play-sound.html",
+});
 
 const BADGE_COLOURS = ["red", "blue", "brown", "black"];
 let numHangsObserved = 0;
@@ -199,10 +203,10 @@ function updateBadge() {
     button.badgeColor = BADGE_COLOURS[button.badge % BADGE_COLOURS.length];
     panel.port.emit("warning", null);
     
-    // tell the panel to play a sound if the number of hangs has been incremented
+    // Tell the panel to play a sound if the number of hangs has been incremented
     // (we can only play sounds in documents, and the panel is conveniently a document)
-    if (prevNumHangs !== null && button.badge > prevNumHangs) {
-      panel.port.emit("blip");
+    if (gPlaySound && prevNumHangs !== null && button.badge > prevNumHangs) {
+     soundPlayerPage.port.emit("blip", button.badge - prevNumHangs);
     }
     prevNumHangs = button.badge;
   }
