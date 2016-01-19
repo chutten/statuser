@@ -8,7 +8,7 @@ var gWindow = windowUtils.getMostRecentBrowserWindow();
 
 // load and validate settings
 var gMode = ss.storage.mode;
-if (gMode !== "threadHangs" && gMode !== "eventLoopLags") {
+if (gMode !== "threadHangs" && gMode !== "eventLoopLags" && gMode !== "inputEventResponseLags") {
   gMode = "threadHangs";
 }
 var gPlaySound = ss.storage.playSound;
@@ -151,20 +151,26 @@ gOS.addObserver(exports, "user-interaction-inactive", false);
 gBrowser.addTabsProgressListener(exports)
 
 function numGeckoHangs() {
+  var hangs;
   switch(gMode) {
-    case "threadHangs": {
-      return numThreadHangs();
-    }
-    case "eventLoopLags": {
-      return numEventLoopLags();
-    }
+    case "threadHangs":
+      hangs = numGeckoThreadHangs();
+      panel.port.emit("warning", hangs === null ? "unavailableBHR" : null);
+      return hangs
+    case "eventLoopLags":
+      hangs = numEventLoopLags();
+      panel.port.emit("warning", hangs === null ? "unavailableEventLoopLags" : null);
+      return hangs;
+    case "inputEventResponseLags":
+      hangs = numInputEventResponseLags();
+      panel.port.emit("warning", hangs === null ? "unavailableInputEventResponseLags" : null);
     default:
       console.warn("Unknown mode: ", gMode);
       return 0;
   }
 }
 
-function numThreadHangs() {
+function numGeckoThreadHangs() {
   let geckoThread = Services.telemetry.threadHangStats.find(thread =>
     thread.name == "Gecko"
   );
@@ -182,10 +188,29 @@ function numThreadHangs() {
 }
 
 function numEventLoopLags() {
-  let snapshot = Services.telemetry.getHistogramById("EVENTLOOP_UI_ACTIVITY_EXP_MS").snapshot();
+  try {
+    var snapshot = Services.telemetry.getHistogramById("EVENTLOOP_UI_ACTIVITY_EXP_MS").snapshot();
+  } catch (e) { // histogram doesn't exist, the Firefox version is likely older than 45.0a1
+    return null;
+  }
   let result = 0;
   for (let i = 0; i < snapshot.ranges.length; ++i) {
-    if (snapshot.ranges[i] > 50) {
+    if (snapshot.ranges[i] > gHangThreshold) {
+      result += snapshot.counts[i];
+    }
+  }
+  return result;
+}
+
+function numInputEventResponseLags() {
+  try {
+    var snapshot = Services.telemetry.getHistogramById("INPUT_EVENT_RESPONSE_MS").snapshot();
+  } catch (e) { // histogram doesn't exist, the Firefox version is likely older than 46.0a1
+    return null;
+  }
+  let result = 0;
+  for (let i = 0; i < snapshot.ranges.length; ++i) {
+    if (snapshot.ranges[i] > gHangThreshold) {
       result += snapshot.counts[i];
     }
   }
@@ -246,12 +271,10 @@ function updateBadge() {
   if (numHangs === null) {
     button.badge = "?"
     button.badgeColor = "yellow";
-    panel.port.emit("warning", "unavailableBHR");
     prevNumHangs = null;
   } else {
     button.badge = (numHangs - baseNumHangs) - numHangsObserved;
     button.badgeColor = BADGE_COLOURS[button.badge % BADGE_COLOURS.length];
-    panel.port.emit("warning", null);
 
     // tell the panel to play a sound if the number of hangs has been incremented
     if (gPlaySound && prevNumHangs !== null && button.badge > prevNumHangs) {

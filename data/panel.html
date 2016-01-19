@@ -84,7 +84,8 @@
   <div>
     <label><input type="radio" name="mode" id="countThreadHangs" /> Count thread hangs</label><br>
     <label><input type="radio" name="mode" id="countEventLoopLags" /> Count event loop lags</label>
-    <p class="description">Statuser can count either hangs on the main thread, or hangs on the event loop. Changing this will reset the hang counter.</p>
+    <label><input type="radio" name="mode" id="countInputEventResponseLags" /> Count input event response time lags</label>
+    <p class="description">Statuser can count hangs on the main thread, lags on the event loop, or spikes in input event response time. Changing this setting will reset the hang counter.</p>
   </div>
   <hr>
   <div>
@@ -92,8 +93,8 @@
     <p class="description">Play a blip sound when the hang count increases.</p>
   </div>
   <div>
-    <label>Minimum hang threshold: <input type="number" min="1" id="hangThreshold" /> ms</label>
-    <p class="description">Statuser will only count hangs that last at least as long as this threshold. This is rounded up to the nearest histogram bucket, so may not be exact.</p>
+    <label>Minimum hang/lag threshold: <input type="number" min="1" id="hangThreshold" /> ms</label>
+    <p class="description">Statuser will only count hangs/lags that last at least as long as this threshold. This is rounded up to the nearest histogram bucket, so may not be exact.</p>
   </div>
   <div>
     <button type="button" id="clearCount">Clear count</button>

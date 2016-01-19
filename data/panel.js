@@ -1,11 +1,15 @@
 // emit events on the panel's port for corresponding actions
 var countThreadHangs = document.getElementById("countThreadHangs");
 var countEventLoopLags = document.getElementById("countEventLoopLags");
+var countInputEventResponseLags = document.getElementById("countInputEventResponseLags");
 countThreadHangs.addEventListener("click", function() {
   self.port.emit("mode-changed", "threadHangs");
 });
 countEventLoopLags.addEventListener("click", function() {
   self.port.emit("mode-changed", "eventLoopLags");
+});
+countInputEventResponseLags.addEventListener("click", function() {
+  self.port.emit("mode-changed", "inputEventResponseLags");
 });
 var playSound = document.getElementById("playSound");
 playSound.addEventListener("change", function(event) {
@@ -34,6 +38,9 @@ self.port.on("show", function(currentSettings) {
     case "eventLoopLags":
       document.getElementById("countEventLoopLags").checked = true;
       break;
+    case "inputEventResponseLags":
+      document.getElementById("countInputEventResponseLags").checked = true;
+      break;
     default:
       console.warn("Unknown mode: ", currentSettings.mode);
   }
@@ -43,12 +50,25 @@ self.port.on("show", function(currentSettings) {
 self.port.on("warning", function(warningType) {
   var banner = document.getElementById("warningBanner");
   switch (warningType) {
+    case null:
+      banner.style.display = "none";
+      break;
     case "unavailableBHR":
       banner.innerHTML = "BACKGROUND HANG REPORTING <a href=\"about:telemetry\" target=\"_blank\">UNAVAILABLE</a>";
       banner.style.display = "block";
       break;
+    case "unavailableEventLoopLags":
+      banner.innerHTML = "EVENTLOOP_UI_ACTIVITY_EXP_MS HISTOGRAM <a href=\"about:telemetry\" target=\"_blank\">UNAVAILABLE</a>";
+      banner.style.display = "block";
+      break;
+    case "unavailableInputEventResponseLags":
+      banner.innerHTML = "INPUT_EVENT_RESPONSE_MS HISTOGRAM <a href=\"about:telemetry\" target=\"_blank\">UNAVAILABLE</a>";
+      banner.style.display = "block";
+      break;
     default:
-      banner.style.display = "none";
+      banner.innerHTML = "UNKNOWN WARNING: " + warningType;
+      banner.style.display = "block";
+      break;
   }
 });
 
