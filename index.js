@@ -70,6 +70,7 @@ function changeState(button, aBaseSVG, aAnimateSVG = mAnimateSVG) {
 var panel = require("sdk/panel").Panel({
   contentURL: "./panel.html",
   contentScriptFile: "./panel.js",
+  width: 500,
   height: 600,
 });
 function showPanel() {
@@ -196,8 +197,10 @@ var soundPlayerPage = require("sdk/page-worker").Page({
   contentURL: "./play-sound.html",
 });
 
-// Returns an array of the most recent BHR hang pseudo-stacks as strings
-function mostRecentHangStacks() {
+// Returns an array of the most recent BHR hangs
+var previousCountsMap = {}; // this is a mapping from stack traces (as strings) to corresponding histogram counts
+var recentHangs = [];
+function mostRecentHangs() {
   let geckoThread = Services.telemetry.threadHangStats.find(thread =>
     thread.name == "Gecko"
   );
@@ -205,13 +208,35 @@ function mostRecentHangStacks() {
     console.warn("Uh oh, there doesn't seem to be a thread with name \"Gecko\"!");
     return [];
   }
-  if (geckoThread.hangs.length == 0) { // No hangs found
-    return [];
-  }
-  var recentHangs = geckoThread.hangs.slice(Math.max(0, geckoThread.hangs.length - 10));
-  return recentHangs.map((hangEntry, i) => {
-    return hangEntry.stack.slice(0).reverse().join("\n");
+
+  // diff the current hangs with the previous hangs to figure out what changed in this call, if anything
+  // hangs list will only ever grow: https://dxr.mozilla.org/mozilla-central/source/xpcom/threads/BackgroundHangMonitor.cpp#440
+  // therefore, we only need to check current stacks against previous stacks - there is no need for a 2 way diff
+  // hangs are identified by their stack traces: https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Telemetry.cpp#4316
+  geckoThread.hangs.forEach(hangEntry => {
+    var stack = hangEntry.stack.slice(0).reverse().join("\n");
+    var ranges = hangEntry.histogram.ranges.concat([Infinity]);
+    var counts = hangEntry.histogram.counts;
+    var previousCounts = previousCountsMap.hasOwnProperty(stack) ? previousCountsMap[stack] : [];
+
+    // diff this hang histogram with the previous hang histogram
+    counts.forEach((count, i) => {
+      var previousCount = previousCounts[i] || 0;
+      while (count > previousCount) { // each additional count here is a new hang with this stack and a duration in this bucket's range
+        recentHangs.push({stack: stack, lowerBound: ranges[i], upperBound: ranges[i + 1], timestamp: (new Date()).toLocaleString()});
+        if (recentHangs.length > 10) { // only keep the last 10 items
+          recentHangs.shift();
+        }
+        count --;
+      }
+    });
+
+    // the hang entry is not mutated when new instances of this hang come in
+    // since we aren't using this entry in the previous hangs anymore, we can just set it in the previous hangs
+    previousCountsMap[stack] = counts;
   });
+
+  return recentHangs;
 }
 
 const BADGE_COLOURS = ["red", "blue", "brown", "black"];
@@ -252,7 +277,7 @@ setInterval(() => {
   if (hangCount > numHangs) {
     numHangs = hangCount;
     updateBadge();
-    panel.port.emit("set-hangs", mostRecentHangStacks());
+    panel.port.emit("set-hangs", mostRecentHangs());
     //exports.observe(undefined, "thread-hang");
   }
 }, CHECK_FOR_HANG_INTERVAL);

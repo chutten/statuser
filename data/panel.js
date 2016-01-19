@@ -52,28 +52,43 @@ self.port.on("warning", function(warningType) {
   }
 });
 
-self.port.on("set-hangs", function(hangStacks) {
-  var hangs = document.getElementById("hangStacks");
-  hangs.innerHTML = ""; // clear the contents of the hang stacks list
-  hangStacks.reverse().forEach((hangStack, i) => {
-    // create an entry for the hang stack
+self.port.on("set-hangs", function(hangs) {
+  var entriesContainer = document.getElementById("hangStacks");
+  entriesContainer.innerHTML = ""; // clear the hang entries
+  hangs.reverse().forEach(hang => {
+    // create an entry for the hang
     var entry = document.createElement("div");
-    var copyButton = document.createElement("button");
-    copyButton.innerHTML = '<img src="copy-icon.svg" />'; // public domain copy icon, taken from http://publicicons.org/file-icon/
-    copyButton.className = "copyButton";
-    copyButton.title = "Copy Hang Stack";
-    copyButton.addEventListener("click", function(event) {
-      var value = entry.getElementsByClassName("hangContents")[0].textContent;
-      self.port.emit("copy", value);
-    });
-    entry.appendChild(copyButton);
-    var contents = document.createElement("div");
-    contents.className = "hangContents";
-    contents.appendChild(document.createTextNode(hangStack));
-    entry.appendChild(contents);
-    hangs.appendChild(entry);
+      var contents = document.createElement("pre");
+      contents.className = "stack";
+      contents.appendChild(document.createTextNode(hang.stack));
+      entry.appendChild(contents);
+      var controls = document.createElement("div");
+        controls.className = "controls";
+        var duration = document.createElement("span");
+        if (hang.upperBound == Infinity) {
+          duration.innerHTML = hang.lowerBound + "+ ms ";
+        } else {
+          duration.innerHTML = hang.lowerBound + "-" + hang.upperBound + " ms ";
+        }
+        duration.className = "duration";
+        controls.appendChild(duration);
+        var copyButton = document.createElement("button");
+        copyButton.innerHTML = '<img src="copy-icon.svg" />'; // public domain copy icon, taken from http://publicicons.org/file-icon/
+        copyButton.className = "copyButton";
+        copyButton.title = "Copy Hang Stack";
+        copyButton.addEventListener("click", function(event) {
+          var value = entry.getElementsByClassName("stack")[0].textContent;
+          self.port.emit("copy", value);
+        });
+        controls.appendChild(copyButton);
+        var timestamp = document.createElement("div");
+        timestamp.innerHTML = hang.timestamp;
+        timestamp.className = "timestamp";
+        controls.appendChild(timestamp);
+      entry.appendChild(controls);
+    entriesContainer.appendChild(entry);
   });
-  if (hangStacks.length == 0) {
-    hangs.appendChild(document.createTextNode("No hang stack traces to show."));
+  if (hangs.length == 0) {
+    entriesContainer.appendChild(document.createTextNode("No hang data available."));
   }
 });
