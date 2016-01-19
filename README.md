@@ -4,7 +4,7 @@
 Statuser tracks user status in Firefox. You can get it here:
 https://chutten.github.io/statuser/dist/
 
-The current version is 0.0.12.
+The current version is 0.0.13.
 
 * If the user is considered active, it will take the shape of a red square.
 * If the user is considered inactive, it will take the shape of a blue circle.
