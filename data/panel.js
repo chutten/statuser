@@ -52,7 +52,7 @@ self.port.on("warning", function(warningType) {
   }
 });
 
-self.port.on("set-hangs", function(hangs) {
+function setHangs(hangs) {
   var entriesContainer = document.getElementById("hangStacks");
   entriesContainer.innerHTML = ""; // clear the hang entries
   hangs.reverse().forEach(hang => {
@@ -91,4 +91,7 @@ self.port.on("set-hangs", function(hangs) {
   if (hangs.length == 0) {
     entriesContainer.appendChild(document.createTextNode("No hang data available."));
   }
-});
+}
+
+self.port.on("set-hangs", setHangs);
+setHangs([]);
