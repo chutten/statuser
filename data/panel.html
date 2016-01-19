@@ -13,7 +13,7 @@
     a {
       color: inherit;
     }
-    input[type="submit"] {
+    button {
       font-family: inherit;
       font-size: inherit;
     }
@@ -31,6 +31,49 @@
       padding: 1em;
       margin: 0;
       margin-bottom: 1em;
+    }
+    #hangStacks > div {
+      display: table;
+      width: 100%;
+      min-height: 30px;
+      margin: 0;
+      margin-bottom: 10px;
+      background: #ddd;
+      color: black;
+      font-size: 8px;
+    }
+    .controls {
+      display: table-cell;
+      width: 130px;
+      padding: 5px 10px;
+      text-align: right;
+      background: #888;
+      color: white;
+      z-index: 1;
+    }
+    .controls .duration {
+      font-size: 12px;
+    }
+    .controls .timestamp {
+      margin-top: 5px;
+    }
+    .controls .copyButton {
+      padding: 0;
+      width: 20px;
+      height: 20px;
+      border: 1px solid black;
+      background: white;
+      border-radius: 50%;
+    }
+    .controls .copyButton img {
+      width: 8px;
+    }
+    .controls .copyButton:hover {
+      background: #eee;
+    }
+    .stack {
+      display: table-cell;
+      padding: 10px;
     }
   </style>
 </head>
@@ -58,5 +101,25 @@
   </div>
   <hr>
   <p class="note">On E10S builds, Statuser will <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1228437" target="_blank">only measure main thread hangs</a>.</p>
+  <hr>
+  <h1>MOST RECENT HANGS</h1>
+  <div id="hangStacks">
+    <!-- hang stack entries are added here by `data/panel.js`, and have the following structure: -->
+    <!--<div>
+      <pre class="stack">pineapple
+mango
+grapes
+canteloupe
+banana</pre>
+      <div class="controls">
+        <span class="duration">500-1000 ms</span>
+        <button class="copyButton" title="Copy Hang Stack">
+          <img src="copy-icon.svg" />
+        </button>
+        <div class="timestamp">1/19/2016, 1:09:51 PM</div>
+      </div>
+    </div>-->
+  </div>
+  <p class="note">The stack traces displayed here are are Background Hang Reporter pseudo-stacks. Only the 10 most recent stack traces are shown.</p>
 </body>
 </html>
