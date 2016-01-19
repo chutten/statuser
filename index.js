@@ -1,10 +1,7 @@
 var self = require("sdk/self");
 var ss = require("sdk/simple-storage");
 var clipboard = require("sdk/clipboard");
-
-const windowUtils = require("sdk/window/utils");
-var gBrowser = windowUtils.getMostRecentBrowserWindow().getBrowser();
-var gWindow = windowUtils.getMostRecentBrowserWindow();
+var windowUtils = require("sdk/window/utils");
 
 // load and validate settings
 var gMode = ss.storage.mode;
@@ -111,33 +108,6 @@ panel.port.on("copy", function(value) {
   clipboard.set(value);
 });
 
-exports.observe = function (subject, topic, data) {
-  switch (topic) {
-    case "user-interaction-active":
-      changeState(button, RED_SVG);
-      break;
-    case "user-interaction-inactive":
-      changeState(button, BLUE_CIRCLE_SVG);
-      break;
-    case "thread-hang":
-      changeState(button, YELLOW_SVG);
-      break;
-    default:
-      console.warn("Unknown subject: ", subject);
-      break;
-  }
-};
-
-exports.onStateChange = function (aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
-  if (aWebProgress.isTopLevel && aStateFlags & Ci.nsIWebProgressListener.STATE_IS_WINDOW) {
-    if (aStateFlags & Ci.nsIWebProgressListener.STATE_START) {
-      changeState(button, undefined, ANIMATE_ROTATE_SVG);
-    } else if (aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) {
-      changeState(button, undefined, '');
-    }
-  }
-};
-
 const {Cc, Ci, Cu} = require("chrome");
 
 Cu.import("resource://gre/modules/Services.jsm");
@@ -145,10 +115,33 @@ Cu.import("resource://gre/modules/Services.jsm");
 let gOS = Cc["@mozilla.org/observer-service;1"]
             .getService(Ci.nsIObserverService);
 
-gOS.addObserver(exports, "user-interaction-active", false);
-gOS.addObserver(exports, "user-interaction-inactive", false);
+// the toolbar icon should be red while the user is active, and blue when not
+gOS.addObserver({
+  observe: function (subject, topic, data) {
+    changeState(button, RED_SVG);
+  }
+}, "user-interaction-active", false);
+gOS.addObserver({
+  observe: function (subject, topic, data) {
+    changeState(button, BLUE_CIRCLE_SVG);
+  }
+}, "user-interaction-inactive", false);
 
-gBrowser.addTabsProgressListener(exports)
+// show the spinning icon when any tabs are loading
+var webProgressListener = {
+  // see https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Reference/Interface/nsIWebProgressListener#onStateChange%28%29
+  onStateChange: function (aBrowser, aWebProgress, aRequest, aStateFlags, aStatus) {
+    if (aWebProgress.isTopLevel && aStateFlags & Ci.nsIWebProgressListener.STATE_IS_WINDOW) {
+      if (aStateFlags & Ci.nsIWebProgressListener.STATE_START) {
+        changeState(button, YELLOW_SVG, ANIMATE_ROTATE_SVG);
+      } else if (aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) {
+        changeState(button, undefined, "");
+      }
+    }
+  }
+};
+var gBrowser = windowUtils.getMostRecentBrowserWindow().getBrowser();
+gBrowser.addTabsProgressListener(webProgressListener);
 
 function numGeckoHangs() {
   switch(gMode) {
