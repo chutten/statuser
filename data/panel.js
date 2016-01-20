@@ -102,9 +102,17 @@ function setHangs(hangs) {
         });
         controls.appendChild(copyButton);
         var timestamp = document.createElement("div");
-        timestamp.innerHTML = hang.timestamp;
-        timestamp.className = "timestamp";
+        timestamp.innerHTML = (new Date(hang.timestamp)).toLocaleString();
+        timestamp.className = "time";
         controls.appendChild(timestamp);
+        var uptime = document.createElement("div");
+        if (hang.uptime === null) {
+          uptime.innerHTML = "unknown uptime";
+        } else {
+          uptime.innerHTML = hang.uptime + "ms uptime";
+        }
+        uptime.className = "time";
+        controls.appendChild(uptime);
       entry.appendChild(controls);
     entriesContainer.appendChild(entry);
   });

@@ -222,6 +222,14 @@ var soundPlayerPage = require("sdk/page-worker").Page({
   contentURL: "./play-sound.html",
 });
 
+// retrieve the UNIX millisecond timestamp for when Firefox started
+var startupTimestamp;
+try {
+  startupTimestamp = Services.prefs.getIntPref("toolkit.startup.last_success") * 1000;
+} catch (e) { // retrieving the pref failed, but we can still fail gracefully and just not show it
+  startupTimestamp = null;
+}
+
 // Returns an array of the most recent BHR hangs
 var previousCountsMap = {}; // this is a mapping from stack traces (as strings) to corresponding histogram counts
 var recentHangs = [];
@@ -232,6 +240,14 @@ function mostRecentHangs() {
   if (!geckoThread) {
     console.warn("Uh oh, there doesn't seem to be a thread with name \"Gecko\"!");
     return [];
+  }
+
+  var timestamp = (new Date()).getTime(); // note that this timestamp will only be as accurate as the interval at which this function is called
+  var uptime;
+  if (startupTimestamp === null) {
+    uptime = null;
+  } else {
+    uptime = timestamp - startupTimestamp; // the purpose of showing the uptime is to allow users to match hangs detected using BHR with spikes in the Gecko Profiler addon
   }
 
   // diff the current hangs with the previous hangs to figure out what changed in this call, if anything
@@ -248,7 +264,7 @@ function mostRecentHangs() {
     counts.forEach((count, i) => {
       var previousCount = previousCounts[i] || 0;
       while (count > previousCount) { // each additional count here is a new hang with this stack and a duration in this bucket's range
-        recentHangs.push({stack: stack, lowerBound: ranges[i], upperBound: ranges[i + 1], timestamp: (new Date()).toLocaleString()});
+        recentHangs.push({stack: stack, lowerBound: ranges[i], upperBound: ranges[i + 1], timestamp: timestamp, uptime: uptime});
         if (recentHangs.length > 10) { // only keep the last 10 items
           recentHangs.shift();
         }
@@ -288,7 +304,8 @@ function clearCount() {
   baseNumHangs = numHangs;
   numHangsObserved = 0;
   updateBadge();
-  panel.port.emit("set-hangs", []); // Clear the list of hangs
+  panel.port.emit("set-hangs", []); // clear the panel's list of hangs
+  recentHangs = []; // empty out the list of hangs
 }
 
 const CHECK_FOR_HANG_INTERVAL = 400; // in millis
