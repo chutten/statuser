@@ -269,7 +269,6 @@ function mostRecentHangs() {
       * mozilla::Telemetry::TimeHistogram - http://mxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/ThreadHangStats.h#25
       */
       while (count > previousCount) { // each additional count here is a new hang with this stack and a duration in this bucket's range
-        console.error(i, ranges[i - 1], gHangThreshold)
         if (ranges[i - 1] > gHangThreshold) { // `ranges[i - 1]` is the lower bound here for this particular histogram
           recentHangs.push({stack: stack, lowerBound: ranges[i - 1], upperBound: ranges[i], timestamp: timestamp, uptime: uptime});
           if (recentHangs.length > 10) { // only keep the last 10 items
