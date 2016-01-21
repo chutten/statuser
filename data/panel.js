@@ -54,15 +54,15 @@ self.port.on("warning", function(warningType) {
       banner.style.display = "none";
       break;
     case "unavailableBHR":
-      banner.innerHTML = "BACKGROUND HANG REPORTING <a href=\"about:telemetry\" target=\"_blank\">UNAVAILABLE</a>";
+      banner.innerHTML = "BACKGROUND HANG REPORTING <a href=\"about:telemetry\" target=\"_blank\">UNAVAILABLE</a>; ENABLE BHR AND RESTART FIREFOX";
       banner.style.display = "block";
       break;
     case "unavailableEventLoopLags":
-      banner.innerHTML = "EVENTLOOP_UI_ACTIVITY_EXP_MS HISTOGRAM <a href=\"about:telemetry\" target=\"_blank\">UNAVAILABLE</a>";
+      banner.innerHTML = "EVENTLOOP_UI_ACTIVITY_EXP_MS HISTOGRAM <a href=\"about:telemetry\" target=\"_blank\">UNAVAILABLE</a>; CHECK FIREFOX VERSION";
       banner.style.display = "block";
       break;
     case "unavailableInputEventResponseLags":
-      banner.innerHTML = "INPUT_EVENT_RESPONSE_MS HISTOGRAM <a href=\"about:telemetry\" target=\"_blank\">UNAVAILABLE</a>";
+      banner.innerHTML = "INPUT_EVENT_RESPONSE_MS HISTOGRAM <a href=\"about:telemetry\" target=\"_blank\">UNAVAILABLE</a>; CHECK FIREFOX VERSION";
       banner.style.display = "block";
       break;
     default:

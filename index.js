@@ -172,8 +172,10 @@ function numGeckoThreadHangs() {
     return null;
   }
   let numHangs = 0;
+  // see the NOTE in mostRecentHangs() for caveats when using the activity.counts histogram
+  // to summarize, the ranges are the inclusive upper bound of the histogram rather than the inclusive lower bound
   geckoThread.activity.counts.forEach((count, i) => {
-    if (geckoThread.activity.ranges[i] > gHangThreshold) {
+    if (geckoThread.activity.ranges[i - 1] > gHangThreshold) {
       numHangs += count;
     }
   });
@@ -256,10 +258,22 @@ function mostRecentHangs() {
     // diff this hang histogram with the previous hang histogram
     counts.forEach((count, i) => {
       var previousCount = previousCounts[i] || 0;
+      /*
+      NOTE: when you access the thread hangs, the ranges are actually the inclusive upper bounds of the buckets rather than the inclusive lower bound like other histograms.
+      Basically, when we access the buckets of a TimeHistogram in JS, it has a 0 prepended to the ranges; in C++, the indices behave as all other histograms do.
+
+      For example, bucket 7 actually represents hangs of duration 64ms to 127ms, inclusive. For most other exponential histograms, this would be 128ms to 255ms.
+
+      References:
+      * mozilla::Telemetry::CreateJSTimeHistogram - http://mxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Telemetry.cpp#2947
+      * mozilla::Telemetry::TimeHistogram - http://mxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/ThreadHangStats.h#25
+      */
       while (count > previousCount) { // each additional count here is a new hang with this stack and a duration in this bucket's range
-        recentHangs.push({stack: stack, lowerBound: ranges[i], upperBound: ranges[i + 1], timestamp: timestamp, uptime: uptime});
-        if (recentHangs.length > 10) { // only keep the last 10 items
-          recentHangs.shift();
+        if (ranges[i - 1] > gHangThreshold) { // `ranges[i - 1]` is the lower bound here for this particular histogram
+          recentHangs.push({stack: stack, lowerBound: ranges[i - 1], upperBound: ranges[i], timestamp: timestamp, uptime: uptime});
+          if (recentHangs.length > 10) { // only keep the last 10 items
+            recentHangs.shift();
+          }
         }
         count --;
       }
@@ -293,13 +307,9 @@ function updateBadge() {
   }
 }
 
-function clearCount() {
-  baseNumHangs = numHangs;
-  numHangsObserved = 0;
-  updateBadge();
-  panel.port.emit("set-hangs", []); // clear the panel's list of hangs
-  recentHangs = []; // empty out the list of hangs
-}
+// reset the current hang stacks so we only show the new ones coming in
+mostRecentHangs();
+recentHangs = [];
 
 const CHECK_FOR_HANG_INTERVAL = 400; // in millis
 let numHangs = numGeckoHangs(); // note: this will be null if the hang counter is not available
@@ -315,6 +325,14 @@ setInterval(() => {
   }
 }, CHECK_FOR_HANG_INTERVAL);
 updateBadge();
+
+function clearCount() {
+  baseNumHangs = numHangs;
+  numHangsObserved = 0;
+  updateBadge();
+  panel.port.emit("set-hangs", []); // clear the panel's list of hangs
+  recentHangs = []; // empty out the list of hangs
+}
 
 /* Enable this rAF loop to verify that the hangs reported are roughly equal
  * to the number of hangs observed from script. In Nightly 45, they were.
