@@ -81,9 +81,10 @@
 <body>
   <div id="warningBanner">WARNING</div>
   <h1>STATUSER SETTINGS</h1>
+  <p class="description">The icon is a red square when the user is active, a blue circle when the user is inactive, and turns into a yellow square when there is a page loading in any tab.</p>
   <div>
     <label><input type="radio" name="mode" id="countThreadHangs" /> Count thread hangs</label><br>
-    <label><input type="radio" name="mode" id="countEventLoopLags" /> Count event loop lags</label>
+    <label><input type="radio" name="mode" id="countEventLoopLags" /> Count event loop lags</label><br>
     <label><input type="radio" name="mode" id="countInputEventResponseLags" /> Count input event response time lags</label>
     <p class="description">Statuser can count hangs on the main thread, lags on the event loop, or spikes in input event response time. Changing this setting will reset the hang counter.</p>
   </div>
