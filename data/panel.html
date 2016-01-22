@@ -32,6 +32,9 @@
       margin: 0;
       margin-bottom: 1em;
     }
+    #computedThreshold {
+      text-decoration: underline;
+    }
     #hangStacks > div {
       display: table;
       width: 100%;
@@ -95,7 +98,7 @@
   </div>
   <div>
     <label>Minimum hang/lag threshold: <input type="number" min="1" id="hangThreshold" /> ms</label>
-    <p class="description">Statuser will only count hangs/lags that last at least as long as this threshold. This is rounded up to the nearest histogram bucket, so may not be exact.</p>
+    <p class="description">Statuser will only count hangs/lags that last <span id="computedThreshold">UNKNOWN</span>ms or more. This is the lower bound of the nearest histogram bucket to the right.</p>
   </div>
   <div>
     <button type="button" id="clearCount">Clear count</button>
