@@ -1,7 +1,7 @@
 {
   "title": "Statuser",
   "name": "statuser",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Firefox toolbar indicator lights",
   "main": "index.js",
   "author": "Chris H-C",
