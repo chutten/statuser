@@ -109,7 +109,7 @@ function setHangs(hangs) {
         if (hang.uptime === null) {
           uptime.innerHTML = "unknown uptime";
         } else {
-          uptime.innerHTML = hang.uptime + "ms uptime";
+          uptime.innerHTML = Math.round(hang.uptime) + "ms uptime";
         }
         uptime.className = "time";
         controls.appendChild(uptime);
