@@ -217,12 +217,17 @@ var soundPlayerPage = require("sdk/page-worker").Page({
   contentURL: "./play-sound.html",
 });
 
-// retrieve the UNIX millisecond timestamp for when Firefox started
-var startupTimestamp;
+// returns the number of milliseconds since the process was created
+let profiler = null;
 try {
-  startupTimestamp = Services.prefs.getIntPref("toolkit.startup.last_success") * 1000;
-} catch (e) { // retrieving the pref failed, but we can still fail gracefully and just not show it
-  startupTimestamp = null;
+  profiler = Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
+} catch(e) {} // fail gracefully; if this fails, we will return null in `getUptime()`
+function getUptime() {
+  try {
+    return profiler.getElapsedTime();
+  } catch (e) { // retrieving the pref failed, but we can still fail gracefully and just not show it
+    return null;
+  }
 }
 
 // Returns an array of the most recent BHR hangs
@@ -238,12 +243,7 @@ function mostRecentHangs() {
   }
 
   var timestamp = (new Date()).getTime(); // note that this timestamp will only be as accurate as the interval at which this function is called
-  var uptime;
-  if (startupTimestamp === null) {
-    uptime = null;
-  } else {
-    uptime = timestamp - startupTimestamp; // the purpose of showing the uptime is to allow users to match hangs detected using BHR with spikes in the Gecko Profiler addon
-  }
+  var uptime = getUptime(); // this value matches the X axis in the timeline for the Gecko Profiler addon
 
   // diff the current hangs with the previous hangs to figure out what changed in this call, if anything
   // hangs list will only ever grow: https://dxr.mozilla.org/mozilla-central/source/xpcom/threads/BackgroundHangMonitor.cpp#440
