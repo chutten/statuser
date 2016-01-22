@@ -123,3 +123,8 @@ function setHangs(hangs) {
 
 self.port.on("set-hangs", setHangs);
 setHangs([]);
+
+// process computed threshold changes
+self.port.on("set-computed-threshold", function(computedThreshold) {
+  document.getElementById("computedThreshold").innerHTML = computedThreshold;
+});

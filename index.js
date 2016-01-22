@@ -143,6 +143,7 @@ var webProgressListener = {
 var gBrowser = windowUtils.getMostRecentBrowserWindow().getBrowser();
 gBrowser.addTabsProgressListener(webProgressListener);
 
+// returns the number of Gecko hangs, and the computed minimum threshold for those hangs (which is a value >= gHangThreshold)
 function numGeckoHangs() {
   var hangs;
   switch(gMode) {
@@ -157,9 +158,10 @@ function numGeckoHangs() {
     case "inputEventResponseLags":
       hangs = numInputEventResponseLags();
       panel.port.emit("warning", hangs === null ? "unavailableInputEventResponseLags" : null);
+      return hangs;
     default:
       console.warn("Unknown mode: ", gMode);
-      return 0;
+      return {numHangs: null, minBucketLowerBound: 0};
   }
 }
 
@@ -169,47 +171,54 @@ function numGeckoThreadHangs() {
   );
   if (!geckoThread || !geckoThread.activity.counts) {
     console.warn("Lolwhut? No Gecko thread? No hangs?");
-    return null;
+    return {numHangs: null, minBucketLowerBound: 0};
   }
-  let numHangs = 0;
   // see the NOTE in mostRecentHangs() for caveats when using the activity.counts histogram
   // to summarize, the ranges are the inclusive upper bound of the histogram rather than the inclusive lower bound
+  let numHangs = 0;
+  let minBucketLowerBound = Infinity;
   geckoThread.activity.counts.forEach((count, i) => {
-    if (geckoThread.activity.ranges[i - 1] > gHangThreshold) {
+    var lowerBound = geckoThread.activity.ranges[i - 1] + 1;
+    if (lowerBound >= gHangThreshold) {
       numHangs += count;
+      minBucketLowerBound = Math.min(minBucketLowerBound, lowerBound);
     }
   });
-  return numHangs;
+  return {numHangs: numHangs, minBucketLowerBound: minBucketLowerBound};
 }
 
 function numEventLoopLags() {
   try {
     var snapshot = Services.telemetry.getHistogramById("EVENTLOOP_UI_ACTIVITY_EXP_MS").snapshot();
   } catch (e) { // histogram doesn't exist, the Firefox version is likely older than 45.0a1
-    return null;
+    return {numHangs: null, minBucketLowerBound: 0};
   }
-  let result = 0;
+  let numHangs = 0;
+  let minBucketLowerBound = Infinity;
   for (let i = 0; i < snapshot.ranges.length; ++i) {
-    if (snapshot.ranges[i] > gHangThreshold) {
-      result += snapshot.counts[i];
+    if (snapshot.ranges[i] >= gHangThreshold) {
+      numHangs += snapshot.counts[i];
+      minBucketLowerBound = Math.min(minBucketLowerBound, snapshot.ranges[i]);
     }
   }
-  return result;
+  return {numHangs: numHangs, minBucketLowerBound: minBucketLowerBound};
 }
 
 function numInputEventResponseLags() {
   try {
     var snapshot = Services.telemetry.getHistogramById("INPUT_EVENT_RESPONSE_MS").snapshot();
   } catch (e) { // histogram doesn't exist, the Firefox version is likely older than 46.0a1
-    return null;
+    return {numHangs: null, minBucketLowerBound: 0};
   }
-  let result = 0;
+  let numHangs = 0;
+  let minBucketLowerBound = Infinity;
   for (let i = 0; i < snapshot.ranges.length; ++i) {
     if (snapshot.ranges[i] > gHangThreshold) {
       result += snapshot.counts[i];
+      minBucketLowerBound = Math.min(minBucketLowerBound, snapshot.ranges[i]);
     }
   }
-  return result;
+  return {numHangs: numHangs, minBucketLowerBound: minBucketLowerBound};
 }
 
 var soundPlayerPage = require("sdk/page-worker").Page({
@@ -217,7 +226,7 @@ var soundPlayerPage = require("sdk/page-worker").Page({
   contentURL: "./play-sound.html",
 });
 
-// returns the number of milliseconds since the process was created
+// returns the number of milliseconds since the process was created, or null if this is not available
 let profiler = null;
 try {
   profiler = Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
@@ -269,8 +278,9 @@ function mostRecentHangs() {
       * mozilla::Telemetry::TimeHistogram - http://mxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/ThreadHangStats.h#25
       */
       while (count > previousCount) { // each additional count here is a new hang with this stack and a duration in this bucket's range
-        if (ranges[i - 1] > gHangThreshold) { // `ranges[i - 1]` is the lower bound here for this particular histogram
-          recentHangs.push({stack: stack, lowerBound: ranges[i - 1], upperBound: ranges[i], timestamp: timestamp, uptime: uptime});
+        let lowerBound = ranges[i - 1] + 1;
+        if (lowerBound >= gHangThreshold) {
+          recentHangs.push({stack: stack, lowerBound: lowerBound, upperBound: ranges[i], timestamp: timestamp, uptime: uptime});
           if (recentHangs.length > 10) { // only keep the last 10 items
             recentHangs.shift();
           }
@@ -312,24 +322,28 @@ mostRecentHangs();
 recentHangs = [];
 
 const CHECK_FOR_HANG_INTERVAL = 400; // in millis
-let numHangs = numGeckoHangs(); // note: this will be null if the hang counter is not available
-let baseNumHangs = numHangs; // the number of hangs at the time the counter was last reset
-let hangCount;
+let { numHangs: numHangs, minBucketLowerBound: computedThreshold } = numGeckoHangs(); // note: this will be null if the hang counter is not available
+let baseNumHangs = 0; // the number of hangs at the time the counter was last reset
 setInterval(() => {
-  hangCount = numGeckoHangs();
-  if (hangCount > numHangs) {
+  let { numHangs: hangCount, minBucketLowerBound: lower } = numGeckoHangs();
+  if (hangCount !== numHangs) {
     numHangs = hangCount;
     updateBadge();
     panel.port.emit("set-hangs", mostRecentHangs());
     //exports.observe(undefined, "thread-hang");
   }
+  if (lower !== computedThreshold) { // update the computed threshold
+    computedThreshold = lower;
+    panel.port.emit("set-computed-threshold", computedThreshold);
+  }
 }, CHECK_FOR_HANG_INTERVAL);
-updateBadge();
+clearCount();
 
 function clearCount() {
   baseNumHangs = numHangs;
   numHangsObserved = 0;
   updateBadge();
+  panel.port.emit("set-computed-threshold", computedThreshold);
   panel.port.emit("set-hangs", []); // clear the panel's list of hangs
   recentHangs = []; // empty out the list of hangs
 }
