@@ -45,13 +45,12 @@ const YELLOW_SVG = RED_SVG.replace('red', 'yellow');
 
 var mBaseSVG = RED_SVG;
 var mAnimateSVG = '';
-var mBaseLabel = "User Interaction Active";
 
 var button = ActionButton({
   id: "active-button",
-  label: mBaseLabel,
   badge: 0,
   badgeColor: "red",
+  label: "Statuser",
   icon: mBaseSVG.replace(ANIMATE_TEMPLATE, mAnimateSVG),
   onClick: showPanel,
 });
@@ -329,7 +328,13 @@ setInterval(() => {
   if (hangCount !== numHangs) {
     numHangs = hangCount;
     updateBadge();
-    panel.port.emit("set-hangs", mostRecentHangs());
+    let hangs = mostRecentHangs();
+    panel.port.emit("set-hangs", hangs);
+    if (hangs.length > 0) {
+      button.state("window", {label: "Most recent hang stack:\n\n" + hangs[0].stack});
+    } else {
+      button.state("window", {label: "No recent hang stacks."});
+    }
     //exports.observe(undefined, "thread-hang");
   }
   if (lower !== computedThreshold) { // update the computed threshold
