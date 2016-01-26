@@ -97,8 +97,10 @@ function setHangs(hangs) {
         copyButton.className = "copyButton";
         copyButton.title = "Copy Hang Stack";
         copyButton.addEventListener("click", function(event) {
-          var value = entry.getElementsByClassName("stack")[0].textContent;
-          self.port.emit("copy", value);
+          var time = entry.getElementsByClassName("time")[0].textContent;
+          var uptime = entry.getElementsByClassName("uptime")[0].textContent;
+          var stack = entry.getElementsByClassName("stack")[0].textContent;
+          self.port.emit("copy", "Hang at " + time + " (" + uptime + "):\n\n" + stack);
         });
         controls.appendChild(copyButton);
         var timestamp = document.createElement("div");
@@ -109,9 +111,9 @@ function setHangs(hangs) {
         if (hang.uptime === null) {
           uptime.innerHTML = "unknown uptime";
         } else {
-          uptime.innerHTML = Math.round(hang.uptime) + "ms uptime";
+          uptime.innerHTML = Math.round(hang.previousUptime) + "ms to " + Math.round(hang.uptime) + "ms uptime";
         }
-        uptime.className = "time";
+        uptime.className = "uptime";
         controls.appendChild(uptime);
       entry.appendChild(controls);
     entriesContainer.appendChild(entry);

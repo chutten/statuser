@@ -241,6 +241,7 @@ function getUptime() {
 // Returns an array of the most recent BHR hangs
 var previousCountsMap = {}; // this is a mapping from stack traces (as strings) to corresponding histogram counts
 var recentHangs = [];
+let lastMostRecentHangsTime = getUptime();
 function mostRecentHangs() {
   let geckoThread = Services.telemetry.threadHangStats.find(thread =>
     thread.name == "Gecko"
@@ -279,7 +280,7 @@ function mostRecentHangs() {
       while (count > previousCount) { // each additional count here is a new hang with this stack and a duration in this bucket's range
         let lowerBound = ranges[i - 1] + 1;
         if (lowerBound >= gHangThreshold) {
-          recentHangs.push({stack: stack, lowerBound: lowerBound, upperBound: ranges[i], timestamp: timestamp, uptime: uptime});
+          recentHangs.push({stack: stack, lowerBound: lowerBound, upperBound: ranges[i], timestamp: timestamp, uptime: uptime, previousUptime: lastMostRecentHangsTime});
           if (recentHangs.length > 10) { // only keep the last 10 items
             recentHangs.shift();
           }
@@ -292,7 +293,7 @@ function mostRecentHangs() {
     // since we aren't using this entry in the previous hangs anymore, we can just set it in the previous hangs
     previousCountsMap[stack] = counts;
   });
-
+  lastMostRecentHangsTime = uptime;
   return recentHangs;
 }
 
@@ -331,9 +332,9 @@ setInterval(() => {
     let hangs = mostRecentHangs();
     panel.port.emit("set-hangs", hangs);
     if (hangs.length > 0) {
-      button.state("window", {label: "Most recent hang stack:\n\n" + hangs[0].stack});
+      button.label = "Most recent hang stack:\n\n" + hangs[hangs.length - 1].stack;
     } else {
-      button.state("window", {label: "No recent hang stacks."});
+      button.label = "No recent hang stacks.";
     }
     //exports.observe(undefined, "thread-hang");
   }
